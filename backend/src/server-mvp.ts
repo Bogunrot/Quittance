@@ -10,7 +10,6 @@ import { rateLimitIfEnabled } from './middleware/rate-limit-stub';
 import healthDetailRouter from './routes/health-detail';
 import { toInvoiceDTO } from './utils/invoice-dto';
 import { isDecimalEqual } from './utils/amount-compare';
-import { VerifyErrorCode, VerifyErrorMessages } from './utils/verify-errors';
 
 // Load environment variables
 dotenv.config();
@@ -246,8 +245,7 @@ app.post('/api/invoices/:id/verify', async (req: Request, res: Response) => {
     if (!txHash) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.TX_HASH_REQUIRED,
-        error: VerifyErrorMessages[VerifyErrorCode.TX_HASH_REQUIRED],
+        error: 'Transaction hash is required',
       });
     }
 
@@ -256,24 +254,21 @@ app.post('/api/invoices/:id/verify', async (req: Request, res: Response) => {
     if (!invoice) {
       return res.status(404).json({
         success: false,
-        code: VerifyErrorCode.INVOICE_NOT_FOUND,
-        error: VerifyErrorMessages[VerifyErrorCode.INVOICE_NOT_FOUND],
+        error: 'Invoice not found',
       });
     }
 
     if (invoice.status === 'PAID') {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.INVOICE_ALREADY_PAID,
-        error: VerifyErrorMessages[VerifyErrorCode.INVOICE_ALREADY_PAID],
+        error: 'Invoice has already been paid',
       });
     }
 
     if (invoice.status !== 'PENDING') {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.INVOICE_NOT_PENDING,
-        error: VerifyErrorMessages[VerifyErrorCode.INVOICE_NOT_PENDING],
+        error: 'Invoice is not pending',
       });
     }
 
@@ -284,32 +279,28 @@ app.post('/api/invoices/:id/verify', async (req: Request, res: Response) => {
     if (!paymentOp) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.NO_PAYMENT_OPERATION,
-        error: VerifyErrorMessages[VerifyErrorCode.NO_PAYMENT_OPERATION],
+        error: 'No payment operation found in transaction',
       });
     }
 
     if (transaction.memo !== invoice.memo) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.MEMO_MISMATCH,
-        error: VerifyErrorMessages[VerifyErrorCode.MEMO_MISMATCH],
+        error: 'Memo mismatch',
       });
     }
 
     if (paymentOp.to !== invoice.sellerPublicKey) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.DESTINATION_MISMATCH,
-        error: VerifyErrorMessages[VerifyErrorCode.DESTINATION_MISMATCH],
+        error: 'Payment destination mismatch',
       });
     }
 
     if (!isDecimalEqual(paymentOp.amount, String(invoice.amount))) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.AMOUNT_MISMATCH,
-        error: VerifyErrorMessages[VerifyErrorCode.AMOUNT_MISMATCH],
+        error: 'Amount mismatch',
       });
     }
 
@@ -318,8 +309,7 @@ app.post('/api/invoices/:id/verify', async (req: Request, res: Response) => {
     if (opAsset !== invoice.assetCode) {
       return res.status(400).json({
         success: false,
-        code: VerifyErrorCode.ASSET_MISMATCH,
-        error: VerifyErrorMessages[VerifyErrorCode.ASSET_MISMATCH],
+        error: 'Asset mismatch',
       });
     }
 
@@ -338,8 +328,7 @@ app.post('/api/invoices/:id/verify', async (req: Request, res: Response) => {
     console.error('Verify payment error:', error);
     res.status(500).json({
       success: false,
-      code: VerifyErrorCode.VERIFY_FAILED,
-      error: VerifyErrorMessages[VerifyErrorCode.VERIFY_FAILED],
+      error: error.message || 'Failed to verify payment',
     });
   }
 });
