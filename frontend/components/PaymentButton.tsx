@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Wallet, Loader2 } from 'lucide-react';
 import { invoiceApi } from '@/lib/api';
 import { getAssetByCode } from '@/lib/assets';
+import { horizonStatus } from '@/lib/horizonStatus';
 
 interface PaymentButtonProps {
   destination: string;
@@ -85,7 +86,7 @@ export default function PaymentButton({
       } else {
         toast.error('Payment failed', {
           id: PAY_TOAST_ID,
-          description: error.message || 'Try again',
+          description: horizonStatus(error) || error.message || 'Try again',
         });
       }
     } finally {
