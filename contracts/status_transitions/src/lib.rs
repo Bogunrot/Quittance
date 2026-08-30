@@ -407,15 +407,54 @@ mod tests {
         assert!(!is_allowed(InvoiceStatus::Cancelled, InvoiceStatus::Expired));
     }
 
+    /// Issue #501 — all terminal-status reversals (Paid→Pending,
+    /// Expired→Pending, Cancelled→Pending, and every terminal→terminal
+    /// pair) must be rejected by `is_allowed`. This single false-case
+    /// test covers the full cross-product so a future status addition
+    /// can't slip through.
+    #[test]
+    fn is_allowed_denies_all_terminal_reversals() {
+        let terminals = [
+            InvoiceStatus::Paid,
+            InvoiceStatus::Expired,
+            InvoiceStatus::Cancelled,
+        ];
+        let all_statuses = [
+            InvoiceStatus::Pending,
+            InvoiceStatus::Paid,
+            InvoiceStatus::Expired,
+            InvoiceStatus::Cancelled,
+        ];
+        for &from in &terminals {
+            for &to in &all_statuses {
+                assert!(
+                    !is_allowed(from, to),
+                    "terminal reversal should be denied: {from:?} → {to:?}"
+                );
+            }
+        }
+    }
+
     // ── allowed_targets ────────────────────────────────────────────────
 
     #[test]
-    fn allowed_targets_pending_has_three_targets() {
+    fn allowed_targets_pending_returns_exactly_the_expected_set() {
         let targets = allowed_targets(InvoiceStatus::Pending);
+
+        // Length: exactly the three terminal statuses.
         assert_eq!(targets.len(), 3);
-        assert!(targets.contains(&InvoiceStatus::Paid));
-        assert!(targets.contains(&InvoiceStatus::Expired));
-        assert!(targets.contains(&InvoiceStatus::Cancelled));
+
+        // Members: the exact expected set — Paid, Expired, Cancelled —
+        // with no extras and no omissions. Comparing the whole slice
+        // means adding or removing any target fails this test.
+        assert_eq!(
+            targets,
+            &[
+                InvoiceStatus::Paid,
+                InvoiceStatus::Expired,
+                InvoiceStatus::Cancelled,
+            ]
+        );
     }
 
     #[test]

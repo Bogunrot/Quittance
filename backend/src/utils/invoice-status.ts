@@ -11,3 +11,10 @@ export function isPending(status: InvoiceStatus): boolean {
 export function isPaid(status: InvoiceStatus): boolean {
   return status === 'PAID';
 }
+
+export function isExpired(status: InvoiceStatus): boolean {
+  return status === 'EXPIRED';
+}
+export function isCancelled(status: InvoiceStatus): boolean {
+  return status === 'CANCELLED';
+}

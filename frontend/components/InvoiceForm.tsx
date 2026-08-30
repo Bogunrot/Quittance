@@ -6,12 +6,15 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { STELLAR_ASSETS, getAssetByCode } from '@/lib/assets';
 import { checkAssetReadiness } from '@/lib/stellar';
+import { isValidEmail } from '@/lib/utils';
 import AssetLogo from './AssetLogo';
 
 interface InvoiceFormProps {
   onSuccess?: (invoice: any) => void;
   userWallet?: string;
 }
+
+const amountErrorId = 'amount-error';
 
 export default function InvoiceForm({ onSuccess, userWallet }: InvoiceFormProps) {
   const [loading, setLoading] = useState(false);
@@ -56,7 +59,7 @@ export default function InvoiceForm({ onSuccess, userWallet }: InvoiceFormProps)
 
   const handleEmailChange = (value: string) => {
     setCustomerEmail(value);
-    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    if (value && !isValidEmail(value)) {
       setEmailError('Enter a valid email address');
     } else {
       setEmailError('');
@@ -78,7 +81,7 @@ export default function InvoiceForm({ onSuccess, userWallet }: InvoiceFormProps)
     }
     setAmountError('');
 
-    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+    if (customerEmail && !isValidEmail(customerEmail)) {
       setEmailError('Enter a valid client email');
       return;
     }
@@ -129,7 +132,7 @@ export default function InvoiceForm({ onSuccess, userWallet }: InvoiceFormProps)
             value={amount}
             onChange={(e) => handleAmountChange(e.target.value)}
             aria-invalid={Boolean(amountError)}
-            aria-describedby={amountError ? 'amount-error' : undefined}
+            aria-describedby={amountError ? amountErrorId : undefined}
           />
           <div className="relative">
             <select
@@ -149,7 +152,7 @@ export default function InvoiceForm({ onSuccess, userWallet }: InvoiceFormProps)
           </div>
         </div>
         {amountError && (
-          <p id="amount-error" className="text-sm text-red-600 mt-1">
+          <p id={amountErrorId} className="text-sm text-red-600 mt-1">
             {amountError}
           </p>
         )}
